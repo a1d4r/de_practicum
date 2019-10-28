@@ -97,4 +97,7 @@ plt.plot(x, e_improved, 'o-', label="Improved Euler's method")
 plt.plot(x, e_runge_kutta, 'o-', label="Runge-Kutta method")
 plt.legend()
 
+plt.subplots_adjust(hspace=0.5)
+
+# plt.get_current_fig_manager().window.state('zoomed')
 plt.show()
