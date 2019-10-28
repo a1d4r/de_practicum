@@ -12,92 +12,135 @@ import numpy as np
 # x is in (0, 10)
 #
 # solution: y = (y0 + x0^2 + 1) / e^(x0^2) * e^(x^2) - x^2 - 1
-x0 = 0
-y0 = 1
-X = 1
-N = 10
 
 
 # def f(x, y):
 #     return 2 * x * (x**2 + y)
-def f(x, y):
-    return x**3 * math.exp(-2 * x) - 2 * y
-
-x = np.linspace(x0, X, N + 1)
-
-
-def euler_method():
-    y = np.empty(N + 1)
-    y[0] = y0
-    for i in range(1, N + 1):
-        y[i] = y[i - 1] + (x[i] - x[i - 1]) * f(x[i - 1], y[i - 1])
-    return y
-
-
-def improved_euler_method():
-    y = np.empty(N + 1)
-    y[0] = y0
-    for i in range(1, N + 1):
-        y[i] = y[i - 1] + (x[i] - x[i - 1]) * f(x[i - 1], y[i - 1])
-        y[i] = y[i - 1] + (x[i] - x[i - 1]) * (f(x[i - 1], y[i - 1]) + f(x[i], y[i])) / 2
-    return y
-
-
-def runge_kutta_method():
-    y = np.empty(N + 1)
-    y[0] = y0
-    for i in range(1, N + 1):
-        h = (x[i] - x[i - 1])
-        k1 = f(x[i - 1], y[i - 1])
-        k2 = f(x[i - 1] + h / 2, y[i - 1] + h * k1 / 2)
-        k3 = f(x[i - 1] + h / 2, y[i - 1] + h * k2 / 2)
-        k4 = f(x[i - 1] + h, y[i - 1] + h * k3)
-        y[i] = y[i - 1] + h * (k1 + 2*k2 + 2*k3 + k4) / 6
-    return y
-
 
 # y_exact = (y0 + x0**2 + 1) / math.exp(x0**2) * np.exp(x**2) - x**2 - 1
-y_exact = np.exp(-2 * x) / 4 * (x**4 + 4)
-y_euler = euler_method()
-y_improved_euler = improved_euler_method()
-y_runge_kutta = runge_kutta_method()
 
-e_euler = y_exact - y_euler
-e_improved = y_exact - y_improved_euler
-e_runge_kutta = y_exact - y_runge_kutta
-np.set_printoptions(formatter={'float': '{: 0.5f}'.format})
-print("x:\n", x)
-print("Euler's method:\n", y_euler)
-print("errors: ", e_euler)
-print("Improved Euler's method:\n", y_improved_euler)
-print("errors: ", e_improved)
-print("Runge-Kutta method:\n", y_runge_kutta)
-print("errors: ", e_improved)
 
-# plt.figure(figsize=(8, 10))
+class NumericalMethods:
+    def __init__(self, function, solution, x0, y0, X, N):
+        self.f = function
+        self.s = solution
+        self.x0 = x0
+        self.y0 = y0
+        self.X = X
+        self.N = N
+        self.h = (X - x0) / N
+        self.x = np.linspace(x0, X, N + 1)
+        self.calculate()
 
-plt.subplot(2, 1, 1)
-plt.title("Solutions of the initial value problem")
-plt.xlabel("x")
-plt.ylabel("y")
-plt.grid(True)
-plt.plot(x, y_euler, 'o-', label="Euler's method")
-plt.plot(x, y_improved_euler, 'o-', label="Improved Euler's method")
-plt.plot(x, y_runge_kutta, 'o-', label="Runge-Kutta method")
-plt.plot(x, y_exact, 'o-', label="Exact solution")
-plt.legend()
+    def calculate(self):
+        # Function values
+        self.y_exact = self.calculate_exact_solution()
+        self.y_euler = self.calculate_euler_method()
+        self.y_improved_euler = self.calculate_improved_euler_method()
+        self.y_runge_kutta = self.calculate_runge_kutta_method()
+        # Error values
+        self.e_euler = self.y_exact - self.y_euler
+        self.e_improved = self.y_exact - self.y_improved_euler
+        self.e_runge_kutta = self.y_exact - self.y_runge_kutta
 
-plt.subplot(2, 1, 2)
-plt.title("Errors in approximate solutions")
-plt.xlabel("x")
-plt.ylabel("error")
-plt.grid(True)
-plt.plot(x, e_euler, 'o-', label="Euler's method")
-plt.plot(x, e_improved, 'o-', label="Improved Euler's method")
-plt.plot(x, e_runge_kutta, 'o-', label="Runge-Kutta method")
-plt.legend()
+    def calculate_exact_solution(self):
+        vfunc = np.vectorize(lambda x: self.s(x, self.x0, self.y0))
+        return vfunc(self.x)
 
-plt.subplots_adjust(hspace=0.5)
+    def calculate_euler_method(self):
+        y = np.empty(self.N + 1)
+        y[0] = self.y0
+        for i in range(1, self.N + 1):
+            y[i] = y[i - 1] + self.h * self.f(self.x[i - 1], y[i - 1])
+        return y
 
-# plt.get_current_fig_manager().window.state('zoomed')
-plt.show()
+    def calculate_improved_euler_method(self):
+        y = np.empty(self.N + 1)
+        y[0] = self.y0
+        for i in range(1, self.N + 1):
+            y[i] = y[i - 1] + self.h * self.f(self.x[i - 1], y[i - 1])
+            y[i] = y[i - 1] + self.h * (self.f(self.x[i - 1], y[i - 1]) + self.f(self.x[i], y[i])) / 2
+        return y
+
+    def calculate_runge_kutta_method(self):
+        y = np.empty(self.N + 1)
+        y[0] = self.y0
+        for i in range(1, self.N + 1):
+            k1 = self.f(self.x[i - 1], y[i - 1])
+            k2 = self.f(self.x[i - 1] + self.h / 2, y[i - 1] + self.h * k1 / 2)
+            k3 = self.f(self.x[i - 1] + self.h / 2, y[i - 1] + self.h * k2 / 2)
+            k4 = self.f(self.x[i - 1] + self.h, y[i - 1] + self.h * k3)
+            y[i] = y[i - 1] + self.h * (k1 + 2 * k2 + 2 * k3 + k4) / 6
+        return y
+
+    def print(self):
+        np.set_printoptions(formatter={'float': '{: 0.5f}'.format})
+        print("x:\n", self.x)
+        print("Euler's method:\n", self.y_euler)
+        print("errors: ", self.e_euler)
+        print("Improved Euler's method:\n", self.y_improved_euler)
+        print("errors: ", self.e_improved)
+        print("Runge-Kutta method:\n", self.y_runge_kutta)
+        print("errors: ", self.e_improved)
+
+
+class Application:
+    def __init__(self, function, solution, x0, y0, X, N):
+        self.figure = plt.figure()
+        self.function = function
+        self.solution = solution
+        self.x0 = x0
+        self.y0 = y0
+        self.X = X
+        self.N = N
+        self.nm = NumericalMethods(function, solution, x0, y0, X, N)
+        self.axes_solutions = self.figure.add_subplot(2, 1, 1)
+        self.axes_errors = self.figure.add_subplot(2, 1, 2)
+        self.nm.print()
+        self.plot_solutions()
+        self.plot_errors()
+
+    def plot_solutions(self):
+        self.axes_solutions.set_title("Solutions of the initial value problem")
+        self.axes_solutions.set_xlabel("x")
+        self.axes_solutions.set_ylabel("y")
+        self.axes_solutions.grid(True)
+        self.axes_solutions.plot(self.nm.x, self.nm.y_euler, 'o-', label="Euler's method")
+        self.axes_solutions.plot(self.nm.x, self.nm.y_improved_euler, 'o-', label="Improved Euler's method")
+        self.axes_solutions.plot(self.nm.x, self.nm.y_runge_kutta, 'o-', label="Runge-Kutta method")
+        self.axes_solutions.plot(self.nm.x, self.nm.y_exact, 'o-', label="Exact solution")
+        self.axes_solutions.legend()
+
+    def plot_errors(self):
+        self.axes_errors.set_title("Errors in approximate solutions")
+        self.axes_errors.set_xlabel("x")
+        self.axes_errors.set_ylabel("error")
+        self.axes_errors.grid(True)
+        self.axes_errors.plot(self.nm.x, self.nm.e_euler, 'o-', label="Euler's method")
+        self.axes_errors.plot(self.nm.x, self.nm.e_improved, 'o-', label="Improved Euler's method")
+        self.axes_errors.plot(self.nm.x, self.nm.e_runge_kutta, 'o-', label="Runge-Kutta method")
+        self.axes_errors.legend()
+
+    def show(self):
+        plt.tight_layout()
+        plt.show()
+
+
+def f1(x, y):
+    return x**3 * math.exp(-2 * x) - 2 * y
+
+
+def solution1(x, x0, y0):
+    return math.exp(-2 * x) / 4 * (x ** 4 + 4)
+
+
+def f2(x, y):
+    return 2 * x * (x**2 + y)
+
+
+def solution2(x, x0, y0):
+    return (y0 + x0**2 + 1) / math.exp(x0**2) * math.exp(x**2) - x**2 - 1
+
+
+app = Application(f2, solution2, 0, 0, 2, 20)
+app.show()
