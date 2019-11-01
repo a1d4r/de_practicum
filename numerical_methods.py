@@ -42,6 +42,10 @@ class NumericalMethods:
         self.e_euler = self.y_exact - self.y_euler
         self.e_improved = self.y_exact - self.y_improved_euler
         self.e_runge_kutta = self.y_exact - self.y_runge_kutta
+        # Max error values
+        self.max_e_euler = np.amax(self.e_euler)
+        self.max_e_improved = np.amax(self.e_improved)
+        self.max_e_runge_kutta = np.amax(self.e_runge_kutta)
 
     def calculate_exact_solution(self):
         vfunc = np.vectorize(lambda x: self.s(x, self.x0, self.y0))
@@ -73,6 +77,23 @@ class NumericalMethods:
             y[i] = y[i - 1] + self.h * (k1 + 2 * k2 + 2 * k3 + k4) / 6
         return y
 
+    def calculate_max_error(self, N):
+        self.N = N
+        self.h = (self.X - self.x0) / N
+        self.x = np.linspace(self.x0, self.X, N + 1)
+        self.calculate()
+        return np.amax(self.e_euler), np.amax(self.e_improved), np.amax(self.e_runge_kutta)
+
+    def calculate_max_errors(self, N_values):
+        max_errors_euler = np.empty(len(N_values))
+        max_errors_improved = np.empty(len(N_values))
+        max_errors_runge_kutta = np.empty(len(N_values))
+        for i, N in enumerate(N_values):
+            max_errors_euler[i],  max_errors_improved[i], max_errors_runge_kutta[i] = \
+                self.calculate_max_error(N)
+        return max_errors_euler, max_errors_improved, max_errors_runge_kutta
+
+
     def print(self):
         np.set_printoptions(formatter={'float': '{: 0.5f}'.format})
         print("x:\n", self.x)
@@ -85,41 +106,65 @@ class NumericalMethods:
 
 
 class Application:
+    min_N = 20
+    max_N = 100
+
     def __init__(self, function, solution, x0, y0, X, N):
-        self.figure = plt.figure()
+        # Numerical Methods
         self.function = function
         self.solution = solution
         self.x0 = x0
         self.y0 = y0
         self.X = X
         self.N = N
-        self.nm = NumericalMethods(function, solution, x0, y0, X, N)
-        self.axes_solutions = self.figure.add_subplot(2, 1, 1)
-        self.axes_errors = self.figure.add_subplot(2, 1, 2)
-        self.nm.print()
+        # for displaying solutions
+        self._nm = NumericalMethods(function, solution, x0, y0, X, N)
+        # for calculating max errors
+        self._nm2 = NumericalMethods(function, solution, x0, y0, X, self.min_N)
+        # GUI
+        self._figure = plt.figure()
+        self._axes_solutions = self._figure.add_subplot(3, 1, 1)
+        self._axes_errors = self._figure.add_subplot(3, 1, 2)
+        self._axes_max_errors = self._figure.add_subplot(3, 1, 3)
+        self._nm.print()
         self.plot_solutions()
         self.plot_errors()
+        self.plot_max_errors()
 
     def plot_solutions(self):
-        self.axes_solutions.set_title("Solutions of the initial value problem")
-        self.axes_solutions.set_xlabel("x")
-        self.axes_solutions.set_ylabel("y")
-        self.axes_solutions.grid(True)
-        self.axes_solutions.plot(self.nm.x, self.nm.y_euler, 'o-', label="Euler's method")
-        self.axes_solutions.plot(self.nm.x, self.nm.y_improved_euler, 'o-', label="Improved Euler's method")
-        self.axes_solutions.plot(self.nm.x, self.nm.y_runge_kutta, 'o-', label="Runge-Kutta method")
-        self.axes_solutions.plot(self.nm.x, self.nm.y_exact, 'o-', label="Exact solution")
-        self.axes_solutions.legend()
+        self._axes_solutions.set_title("Solutions of the initial value problem")
+        self._axes_solutions.set_xlabel("x")
+        self._axes_solutions.set_ylabel("y")
+        self._axes_solutions.grid(True)
+        self._axes_solutions.plot(self._nm.x, self._nm.y_euler, 'o-', label="Euler's method")
+        self._axes_solutions.plot(self._nm.x, self._nm.y_improved_euler, 'o-', label="Improved Euler's method")
+        self._axes_solutions.plot(self._nm.x, self._nm.y_runge_kutta, 'o-', label="Runge-Kutta method")
+        self._axes_solutions.plot(self._nm.x, self._nm.y_exact, 'o-', label="Exact solution")
+        self._axes_solutions.legend()
 
     def plot_errors(self):
-        self.axes_errors.set_title("Errors in approximate solutions")
-        self.axes_errors.set_xlabel("x")
-        self.axes_errors.set_ylabel("error")
-        self.axes_errors.grid(True)
-        self.axes_errors.plot(self.nm.x, self.nm.e_euler, 'o-', label="Euler's method")
-        self.axes_errors.plot(self.nm.x, self.nm.e_improved, 'o-', label="Improved Euler's method")
-        self.axes_errors.plot(self.nm.x, self.nm.e_runge_kutta, 'o-', label="Runge-Kutta method")
-        self.axes_errors.legend()
+        self._axes_errors.set_title("Errors in approximate solutions")
+        self._axes_errors.set_xlabel("x")
+        self._axes_errors.set_ylabel("error")
+        self._axes_errors.grid(True)
+        self._axes_errors.plot(self._nm.x, self._nm.e_euler, 'o-', label="Euler's method")
+        self._axes_errors.plot(self._nm.x, self._nm.e_improved, 'o-', label="Improved Euler's method")
+        self._axes_errors.plot(self._nm.x, self._nm.e_runge_kutta, 'o-', label="Runge-Kutta method")
+        self._axes_errors.legend()
+
+    def plot_max_errors(self):
+        self._axes_max_errors.set_title("Max errors in approximate solutions")
+        self._axes_max_errors.set_xlabel("N")
+        self._axes_max_errors.set_ylabel("error")
+        self._axes_max_errors.grid(True)
+        N_values = range(self.min_N, self.max_N + 1)
+        max_errors_euler, max_errors_improved, max_errors_runge_kutta = \
+            self._nm2.calculate_max_errors(N_values)
+        self._axes_max_errors.plot(N_values, max_errors_euler, 'o-', label="Euler's method")
+        self._axes_max_errors.plot(N_values, max_errors_improved, 'o-', label="Improved Euler's method")
+        self._axes_max_errors.plot(N_values, max_errors_runge_kutta, 'o-', label="Runge-Kutta method")
+        self._axes_max_errors.legend()
+
 
     def show(self):
         plt.tight_layout()
