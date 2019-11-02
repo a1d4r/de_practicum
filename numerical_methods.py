@@ -121,9 +121,11 @@ class Application:
         self._nm = NumericalMethods(function, solution, x0, y0, X, N)
         # for calculating max errors
         self._nm2 = NumericalMethods(function, solution, x0, y0, X, self.min_N)
+        # for recalculating max errors (recalculate only if x0, y0, or X change)
+        self._recalculate_max_errors = False
         # GUI
         self._figure = plt.figure(figsize=(9, 8))
-        self._nm.print()
+        # self._nm.print()
         self.plot_solutions()
         self.plot_errors()
         self.plot_max_errors()
@@ -165,9 +167,9 @@ class Application:
         N_values = range(self.min_N, self.max_N + 1)
         max_errors_euler, max_errors_improved, max_errors_runge_kutta = \
             self._nm2.calculate_max_errors(N_values)
-        self._axes_max_errors.plot(N_values, max_errors_euler, 'o-', label="Euler's method")
-        self._axes_max_errors.plot(N_values, max_errors_improved, 'o-', label="Improved Euler's method")
-        self._axes_max_errors.plot(N_values, max_errors_runge_kutta, 'o-', label="Runge-Kutta method")
+        self._max_errors_euler, = self._axes_max_errors.plot(N_values, max_errors_euler, 'o-', label="Euler's method")
+        self._max_errors_impoved, = self._axes_max_errors.plot(N_values, max_errors_improved, 'o-', label="Improved Euler's method")
+        self._max_errors_runge_kutta, = self._axes_max_errors.plot(N_values, max_errors_runge_kutta, 'o-', label="Runge-Kutta method")
         self._axes_max_errors.legend()
 
     def draw_text_box_N(self):
@@ -200,12 +202,15 @@ class Application:
 
     def _submit_x0(self, text):
         self.x0 = int(text)
+        self._recalculate_max_errors = True
 
     def _submit_y0(self, text):
         self.y0 = int(text)
+        self._recalculate_max_errors = True
 
     def _submit_X(self, text):
         self.X = int(text)
+        self._recalculate_max_errors = True
 
     def _press_button(self, event):
         self._recalculate()
@@ -223,13 +228,25 @@ class Application:
         self._errors_impoved.set_data(self._nm.x, self._nm.e_improved)
         self._errors_runge_kutta.set_data(self._nm.x, self._nm.e_runge_kutta)
 
-    def _redraw(self):
+        if self._recalculate_max_errors:
+            self._nm2 = NumericalMethods(self.function, self.solution, self.x0, self.y0, self.X, self.min_N)
+            N_values = range(self.min_N, self.max_N + 1)
+            max_errors_euler, max_errors_improved, max_errors_runge_kutta = \
+                self._nm2.calculate_max_errors(N_values)
+            self._max_errors_euler.set_data(N_values, max_errors_euler)
+            self._max_errors_impoved.set_data(N_values, max_errors_improved)
+            self._max_errors_runge_kutta.set_data(N_values, max_errors_runge_kutta)
 
-        # self._axes_solutions.set_xlim(min())
+    def _redraw(self):
         self._axes_solutions.relim()
         self._axes_solutions.autoscale_view(True,True,True)
         self._axes_errors.relim()
         self._axes_errors.autoscale_view(True,True,True)
+
+        if self._recalculate_max_errors:
+            self._axes_max_errors.relim()
+            self._axes_max_errors.autoscale_view(True,True,True)
+            self._recalculate_max_errors = False
         plt.draw()
 
     def show(self):
