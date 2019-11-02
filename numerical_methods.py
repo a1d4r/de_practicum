@@ -33,11 +33,6 @@ class NumericalMethods:
         self.x = np.linspace(x0, X, N + 1)
         self.calculate()
 
-    def set_N(self, N):
-        self.N = N
-        self.h = (self.X - self.x0) / N
-        self.x = np.linspace(self.x0, self.X, N + 1)
-
     def calculate(self):
         # Function values
         self.y_exact = self.calculate_exact_solution()
@@ -84,7 +79,9 @@ class NumericalMethods:
         return y
 
     def calculate_max_error(self, N):
-        self.set_N(N)
+        self.N = N
+        self.h = (self.X - self.x0) / N
+        self.x = np.linspace(self.x0, self.X, N + 1)
         self.calculate()
         return np.amax(self.e_euler), np.amax(self.e_improved), np.amax(self.e_runge_kutta)
 
@@ -131,6 +128,10 @@ class Application:
         self.plot_errors()
         self.plot_max_errors()
         self.draw_text_box_N()
+        self.draw_text_box_x0()
+        self.draw_text_box_y0()
+        self.draw_text_box_X()
+        self.draw_button()
 
     def plot_solutions(self):
         self._axes_solutions = self._figure.add_subplot(3, 1, 1)
@@ -174,24 +175,61 @@ class Application:
         self._text_box_n = mwidgets.TextBox(self._axes_text_box_n, "N:", initial=str(self.N))
         self._text_box_n.on_submit(self._submit_n)
 
+    def draw_text_box_x0(self):
+        self._axes_text_box_x0 = plt.axes([0.8, 0.80, 0.15, 0.04])
+        self._text_box_x0 = mwidgets.TextBox(self._axes_text_box_x0, "x0:", initial=str(self.x0))
+        self._text_box_x0.on_submit(self._submit_x0)
+
+    def draw_text_box_y0(self):
+        self._axes_text_box_y0 = plt.axes([0.8, 0.74, 0.15, 0.04])
+        self._text_box_y0 = mwidgets.TextBox(self._axes_text_box_y0, "y0:", initial=str(self.y0))
+        self._text_box_y0.on_submit(self._submit_y0)
+
+    def draw_text_box_X(self):
+        self._axes_text_box_X = plt.axes([0.8, 0.68, 0.15, 0.04])
+        self._text_box_X = mwidgets.TextBox(self._axes_text_box_X, "X:", initial=str(self.X))
+        self._text_box_X.on_submit(self._submit_X)
+
+    def draw_button(self):
+        self._axes_button= plt.axes([0.8, 0.62, 0.15, 0.04])
+        self._button = mwidgets.Button(self._axes_button, "Update")
+        self._button.on_clicked(self._press_button)
+
     def _submit_n(self, text):
         self.N = int(text)
-        self._nm.set_N(self.N)
-        self._nm.calculate()
+
+    def _submit_x0(self, text):
+        self.x0 = int(text)
+
+    def _submit_y0(self, text):
+        self.y0 = int(text)
+
+    def _submit_X(self, text):
+        self.X = int(text)
+
+    def _press_button(self, event):
+        self._recalculate()
+        self._redraw()
+
+    def _recalculate(self):
+        self._nm = NumericalMethods(self.function, self.solution, self.x0, self.y0, self.X, self.N)
 
         self._solution_euler.set_data(self._nm.x, self._nm.y_euler)
         self._solution_impoved.set_data(self._nm.x, self._nm.y_improved)
         self._solution_runge_kutta.set_data(self._nm.x, self._nm.y_runge_kutta)
         self._solution_exact.set_data(self._nm.x, self._nm.y_exact)
-        self._axes_solutions.relim()
-        self._axes_solutions.autoscale_view(True,True,True)
 
         self._errors_euler.set_data(self._nm.x, self._nm.e_euler)
         self._errors_impoved.set_data(self._nm.x, self._nm.e_improved)
         self._errors_runge_kutta.set_data(self._nm.x, self._nm.e_runge_kutta)
+
+    def _redraw(self):
+
+        # self._axes_solutions.set_xlim(min())
+        self._axes_solutions.relim()
+        self._axes_solutions.autoscale_view(True,True,True)
         self._axes_errors.relim()
         self._axes_errors.autoscale_view(True,True,True)
-
         plt.draw()
 
     def show(self):
