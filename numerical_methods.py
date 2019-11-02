@@ -108,6 +108,8 @@ class NumericalMethods:
 class Application:
     min_N = 20
     max_N = 100
+    labels = ["Euler's method", "Improved Euler's method", "Runge-Kutta method", "Exact solution"]
+
 
     def __init__(self, function, solution, x0, y0, X, N):
         # Numerical Methods
@@ -141,11 +143,13 @@ class Application:
         self._axes_solutions.set_xlabel("x")
         self._axes_solutions.set_ylabel("y")
         self._axes_solutions.grid(True)
-        self._solution_euler, = self._axes_solutions.plot(self._nm.x, self._nm.y_euler, 'o-', label="Euler's method")
-        self._solution_impoved, = self._axes_solutions.plot(self._nm.x, self._nm.y_improved, 'o-', label="Improved Euler's method")
-        self._solution_runge_kutta, = self._axes_solutions.plot(self._nm.x, self._nm.y_runge_kutta, 'o-', label="Runge-Kutta method")
-        self._solution_exact, = self._axes_solutions.plot(self._nm.x, self._nm.y_exact, 'o-', label="Exact solution")
-        self._axes_solutions.legend()
+        self._solution_euler, = self._axes_solutions.plot(self._nm.x, self._nm.y_euler, 'o-', label=self.labels[0])
+        self._solution_improved, = self._axes_solutions.plot(self._nm.x, self._nm.y_improved, 'o-', label=self.labels[1])
+        self._solution_runge_kutta, = self._axes_solutions.plot(self._nm.x, self._nm.y_runge_kutta, 'o-', label=self.labels[2])
+        self._solution_exact, = self._axes_solutions.plot(self._nm.x, self._nm.y_exact, 'o-', label=self.labels[3])
+        self._legend_solution = self._axes_solutions.legend()
+        for line in self._legend_solution.get_lines():
+            line.set_picker(5)
 
     def plot_errors(self):
         self._axes_errors = self._figure.add_subplot(3, 1, 2)
@@ -153,10 +157,12 @@ class Application:
         self._axes_errors.set_xlabel("x")
         self._axes_errors.set_ylabel("error")
         self._axes_errors.grid(True)
-        self._errors_euler, = self._axes_errors.plot(self._nm.x, self._nm.e_euler, 'o-', label="Euler's method")
-        self._errors_impoved, = self._axes_errors.plot(self._nm.x, self._nm.e_improved, 'o-', label="Improved Euler's method")
-        self._errors_runge_kutta, = self._axes_errors.plot(self._nm.x, self._nm.e_runge_kutta, 'o-', label="Runge-Kutta method")
-        self._axes_errors.legend()
+        self._errors_euler, = self._axes_errors.plot(self._nm.x, self._nm.e_euler, 'o-', label=self.labels[0])
+        self._errors_improved, = self._axes_errors.plot(self._nm.x, self._nm.e_improved, 'o-', label=self.labels[1])
+        self._errors_runge_kutta, = self._axes_errors.plot(self._nm.x, self._nm.e_runge_kutta, 'o-', label=self.labels[2])
+        self._legend_errors = self._axes_errors.legend()
+        for line in self._legend_errors.get_lines():
+            line.set_picker(5)
 
     def plot_max_errors(self):
         self._axes_max_errors = self._figure.add_subplot(3, 1, 3)
@@ -167,10 +173,12 @@ class Application:
         N_values = range(self.min_N, self.max_N + 1)
         max_errors_euler, max_errors_improved, max_errors_runge_kutta = \
             self._nm2.calculate_max_errors(N_values)
-        self._max_errors_euler, = self._axes_max_errors.plot(N_values, max_errors_euler, 'o-', label="Euler's method")
-        self._max_errors_impoved, = self._axes_max_errors.plot(N_values, max_errors_improved, 'o-', label="Improved Euler's method")
-        self._max_errors_runge_kutta, = self._axes_max_errors.plot(N_values, max_errors_runge_kutta, 'o-', label="Runge-Kutta method")
-        self._axes_max_errors.legend()
+        self._max_errors_euler, = self._axes_max_errors.plot(N_values, max_errors_euler, 'o-', label=self.labels[0])
+        self._max_errors_improved, = self._axes_max_errors.plot(N_values, max_errors_improved, 'o-', label=self.labels[1])
+        self._max_errors_runge_kutta, = self._axes_max_errors.plot(N_values, max_errors_runge_kutta, 'o-', label=self.labels[2])
+        self._legend_max_errors = self._axes_max_errors.legend()
+        for line in self._legend_max_errors.get_lines():
+            line.set_picker(5)
 
     def draw_text_box_N(self):
         self._axes_text_box_n = plt.axes([0.8, 0.86, 0.15, 0.04])
@@ -195,7 +203,7 @@ class Application:
     def draw_button(self):
         self._axes_button= plt.axes([0.8, 0.62, 0.15, 0.04])
         self._button = mwidgets.Button(self._axes_button, "Update")
-        self._button.on_clicked(self._press_button)
+        self._button.on_clicked(self._on_press)
 
     def _submit_n(self, text):
         self.N = int(text)
@@ -212,20 +220,52 @@ class Application:
         self.X = int(text)
         self._recalculate_max_errors = True
 
-    def _press_button(self, event):
+    def _on_press(self, event):
         self._recalculate()
         self._redraw()
+
+    def _on_pick(self, event):
+        solutions = [self._solution_euler, self._solution_improved, self._solution_runge_kutta, self._solution_exact]
+        errors = [self._errors_euler, self._errors_improved, self._errors_runge_kutta]
+        max_errors = [self._max_errors_euler, self._max_errors_improved, self._max_errors_runge_kutta]
+
+        for i in range(4):
+            if event.artist.get_label() == self.labels[i]:
+                solutions[i].set_visible(not solutions[i].get_visible())
+                if solutions[i].get_visible():
+                    self._legend_solution.legendHandles[i].set_alpha(1)
+                    self._legend_solution.legendHandles[i]._legmarker.set_alpha(1)
+                else:
+                    self._legend_solution.legendHandles[i].set_alpha(0.2)
+                    self._legend_solution.legendHandles[i]._legmarker.set_alpha(0.2)
+                if i < 3:
+                    errors[i].set_visible(not errors[i].get_visible())
+                    if errors[i].get_visible():
+                        self._legend_errors.legendHandles[i].set_alpha(1)
+                        self._legend_errors.legendHandles[i]._legmarker.set_alpha(1)
+                    else:
+                        self._legend_errors.legendHandles[i].set_alpha(0.2)
+                        self._legend_errors.legendHandles[i]._legmarker.set_alpha(0.2)
+                    max_errors[i].set_visible(not max_errors[i].get_visible())
+                    if max_errors[i].get_visible():
+                        self._legend_max_errors.legendHandles[i].set_alpha(1)
+                        self._legend_max_errors.legendHandles[i]._legmarker.set_alpha(1)
+                    else:
+                        self._legend_max_errors.legendHandles[i].set_alpha(0.2)
+                        self._legend_max_errors.legendHandles[i]._legmarker.set_alpha(0.2)
+        self._figure.canvas.draw()
+
 
     def _recalculate(self):
         self._nm = NumericalMethods(self.function, self.solution, self.x0, self.y0, self.X, self.N)
 
         self._solution_euler.set_data(self._nm.x, self._nm.y_euler)
-        self._solution_impoved.set_data(self._nm.x, self._nm.y_improved)
+        self._solution_improved.set_data(self._nm.x, self._nm.y_improved)
         self._solution_runge_kutta.set_data(self._nm.x, self._nm.y_runge_kutta)
         self._solution_exact.set_data(self._nm.x, self._nm.y_exact)
 
         self._errors_euler.set_data(self._nm.x, self._nm.e_euler)
-        self._errors_impoved.set_data(self._nm.x, self._nm.e_improved)
+        self._errors_improved.set_data(self._nm.x, self._nm.e_improved)
         self._errors_runge_kutta.set_data(self._nm.x, self._nm.e_runge_kutta)
 
         if self._recalculate_max_errors:
@@ -234,7 +274,7 @@ class Application:
             max_errors_euler, max_errors_improved, max_errors_runge_kutta = \
                 self._nm2.calculate_max_errors(N_values)
             self._max_errors_euler.set_data(N_values, max_errors_euler)
-            self._max_errors_impoved.set_data(N_values, max_errors_improved)
+            self._max_errors_improved.set_data(N_values, max_errors_improved)
             self._max_errors_runge_kutta.set_data(N_values, max_errors_runge_kutta)
 
     def _redraw(self):
@@ -251,6 +291,7 @@ class Application:
 
     def show(self):
         plt.subplots_adjust(left=0.1, bottom=0.1, right=0.7, top=0.9, wspace=None, hspace=1.0)
+        self._figure.canvas.mpl_connect('pick_event', self._on_pick)
         # plt.tight_layout()
         plt.show()
 
