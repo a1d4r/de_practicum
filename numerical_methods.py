@@ -126,7 +126,7 @@ class Application:
         # for recalculating max errors (recalculate only if x0, y0, or X change)
         self._recalculate_max_errors = False
         # GUI
-        self._figure = plt.figure(figsize=(9, 8))
+        self._figure = plt.figure(figsize=(9, 8), num="Differential Equations: Numerical Methods")
         # self._nm.print()
         self.plot_solutions()
         self.plot_errors()
@@ -143,10 +143,10 @@ class Application:
         self._axes_solutions.set_xlabel("x")
         self._axes_solutions.set_ylabel("y")
         self._axes_solutions.grid(True)
-        self._solution_euler, = self._axes_solutions.plot(self._nm.x, self._nm.y_euler, 'o-', label=self.labels[0])
-        self._solution_improved, = self._axes_solutions.plot(self._nm.x, self._nm.y_improved, 'o-', label=self.labels[1])
-        self._solution_runge_kutta, = self._axes_solutions.plot(self._nm.x, self._nm.y_runge_kutta, 'o-', label=self.labels[2])
-        self._solution_exact, = self._axes_solutions.plot(self._nm.x, self._nm.y_exact, 'o-', label=self.labels[3])
+        self._solution_euler, = self._axes_solutions.plot(self._nm.x, self._nm.y_euler, 'o-', markersize=3, label=self.labels[0])
+        self._solution_improved, = self._axes_solutions.plot(self._nm.x, self._nm.y_improved, 'o-', markersize=3, label=self.labels[1])
+        self._solution_runge_kutta, = self._axes_solutions.plot(self._nm.x, self._nm.y_runge_kutta, 'o-', markersize=3, label=self.labels[2])
+        self._solution_exact, = self._axes_solutions.plot(self._nm.x, self._nm.y_exact, 'o-', markersize=3, label=self.labels[3])
         self._legend_solution = self._axes_solutions.legend()
         for line in self._legend_solution.get_lines():
             line.set_picker(5)
@@ -157,9 +157,9 @@ class Application:
         self._axes_errors.set_xlabel("x")
         self._axes_errors.set_ylabel("error")
         self._axes_errors.grid(True)
-        self._errors_euler, = self._axes_errors.plot(self._nm.x, self._nm.e_euler, 'o-', label=self.labels[0])
-        self._errors_improved, = self._axes_errors.plot(self._nm.x, self._nm.e_improved, 'o-', label=self.labels[1])
-        self._errors_runge_kutta, = self._axes_errors.plot(self._nm.x, self._nm.e_runge_kutta, 'o-', label=self.labels[2])
+        self._errors_euler, = self._axes_errors.plot(self._nm.x, self._nm.e_euler, 'o-', markersize=3, label=self.labels[0])
+        self._errors_improved, = self._axes_errors.plot(self._nm.x, self._nm.e_improved, 'o-', markersize=3, label=self.labels[1])
+        self._errors_runge_kutta, = self._axes_errors.plot(self._nm.x, self._nm.e_runge_kutta, 'o-', markersize=3, label=self.labels[2])
         self._legend_errors = self._axes_errors.legend()
         for line in self._legend_errors.get_lines():
             line.set_picker(5)
@@ -173,9 +173,9 @@ class Application:
         N_values = range(self.min_N, self.max_N + 1)
         max_errors_euler, max_errors_improved, max_errors_runge_kutta = \
             self._nm2.calculate_max_errors(N_values)
-        self._max_errors_euler, = self._axes_max_errors.plot(N_values, max_errors_euler, 'o-', label=self.labels[0])
-        self._max_errors_improved, = self._axes_max_errors.plot(N_values, max_errors_improved, 'o-', label=self.labels[1])
-        self._max_errors_runge_kutta, = self._axes_max_errors.plot(N_values, max_errors_runge_kutta, 'o-', label=self.labels[2])
+        self._max_errors_euler, = self._axes_max_errors.plot(N_values, max_errors_euler, 'o-', markersize=3, label=self.labels[0])
+        self._max_errors_improved, = self._axes_max_errors.plot(N_values, max_errors_improved, 'o-', markersize=3, label=self.labels[1])
+        self._max_errors_runge_kutta, = self._axes_max_errors.plot(N_values, max_errors_runge_kutta, 'o-', markersize=3, label=self.labels[2])
         self._legend_max_errors = self._axes_max_errors.legend()
         for line in self._legend_max_errors.get_lines():
             line.set_picker(5)
