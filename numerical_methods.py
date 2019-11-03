@@ -83,7 +83,9 @@ class NumericalMethods:
         self.h = (self.X - self.x0) / N
         self.x = np.linspace(self.x0, self.X, N + 1)
         self.calculate()
-        return np.amax(self.e_euler), np.amax(self.e_improved), np.amax(self.e_runge_kutta)
+        return max(np.amax(self.e_euler), abs(np.amin(self.e_euler))), \
+               max(np.amax(self.e_improved), abs(np.amin(self.e_improved))), \
+               max(np.amax(self.e_runge_kutta), abs(np.amin(self.e_runge_kutta)))
 
     def calculate_max_errors(self, N_values):
         max_errors_euler = np.empty(len(N_values))
@@ -97,6 +99,7 @@ class NumericalMethods:
     def print(self):
         np.set_printoptions(formatter={'float': '{: 0.5f}'.format})
         print("x:\n", self.x)
+        print("Exact solution:\n", self.y_exact)
         print("Euler's method:\n", self.y_euler)
         print("errors: ", self.e_euler)
         print("Improved Euler's method:\n", self.y_improved)
@@ -127,7 +130,6 @@ class Application:
         self._recalculate_max_errors = False
         # GUI
         self._figure = plt.figure(figsize=(9, 8), num="Differential Equations: Numerical Methods")
-        # self._nm.print()
         self.plot_solutions()
         self.plot_errors()
         self.plot_max_errors()
@@ -258,6 +260,7 @@ class Application:
 
     def _recalculate(self):
         self._nm = NumericalMethods(self.function, self.solution, self.x0, self.y0, self.X, self.N)
+        # self._nm.print()
 
         self._solution_euler.set_data(self._nm.x, self._nm.y_euler)
         self._solution_improved.set_data(self._nm.x, self._nm.y_improved)
@@ -273,6 +276,7 @@ class Application:
             N_values = range(self.min_N, self.max_N + 1)
             max_errors_euler, max_errors_improved, max_errors_runge_kutta = \
                 self._nm2.calculate_max_errors(N_values)
+            # print(max_errors_euler, max_errors_improved, max_errors_runge_kutta)
             self._max_errors_euler.set_data(N_values, max_errors_euler)
             self._max_errors_improved.set_data(N_values, max_errors_improved)
             self._max_errors_runge_kutta.set_data(N_values, max_errors_runge_kutta)
