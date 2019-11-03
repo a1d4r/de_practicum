@@ -112,7 +112,7 @@ class Application:
     min_N = 20
     max_N = 100
     labels = ["Euler's method", "Improved Euler's method", "Runge-Kutta method", "Exact solution"]
-
+    styles = ["Segments", "Segments with dots"]
 
     def __init__(self, function, solution, x0, y0, X, N):
         # Numerical Methods
@@ -138,6 +138,7 @@ class Application:
         self.draw_text_box_y0()
         self.draw_text_box_X()
         self.draw_button()
+        self.draw_radio_buttons()
 
     def plot_solutions(self):
         self._axes_solutions = self._figure.add_subplot(3, 1, 1)
@@ -205,7 +206,13 @@ class Application:
     def draw_button(self):
         self._axes_button= plt.axes([0.8, 0.62, 0.15, 0.04])
         self._button = mwidgets.Button(self._axes_button, "Update")
-        self._button.on_clicked(self._on_press)
+        self._button.on_clicked(self._on_press_button)
+
+    def draw_radio_buttons(self):
+        self._axes_radio_buttons = plt.axes([0.75, 0.45, 0.22, 0.1])
+        self._axes_radio_buttons.set_title("Line style")
+        self._radio_buttons = mwidgets.RadioButtons(self._axes_radio_buttons, self.styles, 1)
+        self._radio_buttons.on_clicked(self._on_click_radio_button)
 
     def _submit_n(self, text):
         self.N = int(text)
@@ -222,9 +229,32 @@ class Application:
         self.X = int(text)
         self._recalculate_max_errors = True
 
-    def _on_press(self, event):
+    def _on_press_button(self, event):
         self._recalculate()
         self._redraw()
+
+    def _on_click_radio_button(self, style):
+        solutions = [self._solution_euler, self._solution_improved, self._solution_runge_kutta, self._solution_exact]
+        errors = [self._errors_euler, self._errors_improved, self._errors_runge_kutta]
+        max_errors = [self._max_errors_euler, self._max_errors_improved, self._max_errors_runge_kutta]
+
+        if style == self.styles[0]:
+            for solution in solutions:
+                solution.set_marker(None)
+            for error in errors:
+                error.set_marker(None)
+            for max_error in max_errors:
+                max_error.set_marker(None)
+
+        if style == self.styles[1]:
+            for solution in solutions:
+                solution.set_marker("o")
+            for error in errors:
+                error.set_marker("o")
+            for max_error in max_errors:
+                max_error.set_marker("o")
+
+        self._figure.canvas.draw()
 
     def _on_pick(self, event):
         solutions = [self._solution_euler, self._solution_improved, self._solution_runge_kutta, self._solution_exact]
