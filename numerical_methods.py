@@ -5,7 +5,36 @@ import numpy as np
 
 
 class NumericalMethods:
+    """
+    A class used for solving differential equations using numerical methods.
+    It solves the initial value problem in the form:
+
+    y' = f(x, y)
+
+    y(x0) = y0
+
+    x is in (x0, X)
+    """
+
     def __init__(self, function, solution, x0, y0, X, N):
+        """
+        Create an instance of class for the specified IVP
+
+        :param function: (float, float) -> float
+            The function which specifies f in the differential equation of the form y' = f(x, y)
+        :param solution: (float, float, float, float) -> float
+            The function which specifies g in the exact solution of the intiial value problem with y(x0) = y0
+            of the form y = g(x, y, x0, y0)
+        :param x0: float
+            The initial x of the initial value problem
+        :param y0: float
+            The initial y of the initial value problem
+        :param X: float
+            The right bound for x
+        :param N: float
+            The number of grid cells for approximating with numerical methods
+        """
+
         self.f = function
         self.s = solution
         self.x0 = x0
@@ -75,7 +104,7 @@ class NumericalMethods:
         max_errors_improved = np.empty(len(N_values))
         max_errors_runge_kutta = np.empty(len(N_values))
         for i, N in enumerate(N_values):
-            max_errors_euler[i],  max_errors_improved[i], max_errors_runge_kutta[i] = \
+            max_errors_euler[i], max_errors_improved[i], max_errors_runge_kutta[i] = \
                 self.calculate_max_error(N)
         return max_errors_euler, max_errors_improved, max_errors_runge_kutta
 
@@ -92,10 +121,35 @@ class NumericalMethods:
 
 
 class Application:
+    """
+    A class used to create GUI for the differential equation application
+    """
+
     labels = ["Euler's method", "Improved Euler's method", "Runge-Kutta method", "Exact solution"]
     styles = ["Segments", "Segments with dots"]
 
     def __init__(self, function, solution, x0, y0, X, N=20, min_N=20, max_N=100):
+        """
+        Creates the GUI for application
+
+        :param function: (float, float) -> float
+            The function which specifies f in the differential equation of the form y' = f(x, y)
+        :param solution: (float, float, float, float) -> float
+            The function which specifies g in the exact solution of the intiial value problem with y(x0) = y0
+            of the form y = g(x, y, x0, y0)
+        :param x0: float
+            The initial x of the initial value problem
+        :param y0: float
+            The initial y of the initial value problem
+        :param X: float
+            The right bound for x
+        :param N: float
+            The number of grid cells for approximating with numerical methods
+        :param min_N: float, optional, default=20
+            The left bound for the number of grid cells
+        :param max_N: float, optional, default=100
+            The right bound for the number of grid cells
+        """
         # Numerical Methods
         self.function = function
         self.solution = solution
@@ -133,10 +187,14 @@ class Application:
         self._axes_solutions.set_xlabel("x")
         self._axes_solutions.set_ylabel("y")
         self._axes_solutions.grid(True)
-        self._solution_euler, = self._axes_solutions.plot(self._nm.x, self._nm.y_euler, 'o-', markersize=3, label=self.labels[0])
-        self._solution_improved, = self._axes_solutions.plot(self._nm.x, self._nm.y_improved, 'o-', markersize=3, label=self.labels[1])
-        self._solution_runge_kutta, = self._axes_solutions.plot(self._nm.x, self._nm.y_runge_kutta, 'o-', markersize=3, label=self.labels[2])
-        self._solution_exact, = self._axes_solutions.plot(self._nm.x, self._nm.y_exact, 'o-', markersize=3, label=self.labels[3])
+        self._solution_euler, = self._axes_solutions.plot(self._nm.x, self._nm.y_euler, 'o-', markersize=3,
+                                                          label=self.labels[0])
+        self._solution_improved, = self._axes_solutions.plot(self._nm.x, self._nm.y_improved, 'o-', markersize=3,
+                                                             label=self.labels[1])
+        self._solution_runge_kutta, = self._axes_solutions.plot(self._nm.x, self._nm.y_runge_kutta, 'o-', markersize=3,
+                                                                label=self.labels[2])
+        self._solution_exact, = self._axes_solutions.plot(self._nm.x, self._nm.y_exact, 'o-', markersize=3,
+                                                          label=self.labels[3])
         self._legend_solution = self._axes_solutions.legend()
         for line in self._legend_solution.get_lines():
             line.set_picker(5)
@@ -147,9 +205,12 @@ class Application:
         self._axes_errors.set_xlabel("x")
         self._axes_errors.set_ylabel("error")
         self._axes_errors.grid(True)
-        self._errors_euler, = self._axes_errors.plot(self._nm.x, self._nm.e_euler, 'o-', markersize=3, label=self.labels[0])
-        self._errors_improved, = self._axes_errors.plot(self._nm.x, self._nm.e_improved, 'o-', markersize=3, label=self.labels[1])
-        self._errors_runge_kutta, = self._axes_errors.plot(self._nm.x, self._nm.e_runge_kutta, 'o-', markersize=3, label=self.labels[2])
+        self._errors_euler, = self._axes_errors.plot(self._nm.x, self._nm.e_euler, 'o-', markersize=3,
+                                                     label=self.labels[0])
+        self._errors_improved, = self._axes_errors.plot(self._nm.x, self._nm.e_improved, 'o-', markersize=3,
+                                                        label=self.labels[1])
+        self._errors_runge_kutta, = self._axes_errors.plot(self._nm.x, self._nm.e_runge_kutta, 'o-', markersize=3,
+                                                           label=self.labels[2])
         self._legend_errors = self._axes_errors.legend()
         for line in self._legend_errors.get_lines():
             line.set_picker(5)
@@ -163,9 +224,12 @@ class Application:
         N_values = range(self.min_N, self.max_N + 1)
         max_errors_euler, max_errors_improved, max_errors_runge_kutta = \
             self._nm2.calculate_max_errors(N_values)
-        self._max_errors_euler, = self._axes_max_errors.plot(N_values, max_errors_euler, 'o-', markersize=3, label=self.labels[0])
-        self._max_errors_improved, = self._axes_max_errors.plot(N_values, max_errors_improved, 'o-', markersize=3, label=self.labels[1])
-        self._max_errors_runge_kutta, = self._axes_max_errors.plot(N_values, max_errors_runge_kutta, 'o-', markersize=3, label=self.labels[2])
+        self._max_errors_euler, = self._axes_max_errors.plot(N_values, max_errors_euler, 'o-', markersize=3,
+                                                             label=self.labels[0])
+        self._max_errors_improved, = self._axes_max_errors.plot(N_values, max_errors_improved, 'o-', markersize=3,
+                                                                label=self.labels[1])
+        self._max_errors_runge_kutta, = self._axes_max_errors.plot(N_values, max_errors_runge_kutta, 'o-', markersize=3,
+                                                                   label=self.labels[2])
         self._legend_max_errors = self._axes_max_errors.legend()
         for line in self._legend_max_errors.get_lines():
             line.set_picker(5)
@@ -201,7 +265,7 @@ class Application:
         self._text_box_max_N.on_submit(self._submit_max_N)
 
     def draw_button(self):
-        self._axes_button= plt.axes([0.8, 0.50, 0.15, 0.04])
+        self._axes_button = plt.axes([0.8, 0.50, 0.15, 0.04])
         self._button = mwidgets.Button(self._axes_button, "Update")
         self._button.on_clicked(self._on_press_button)
 
@@ -320,13 +384,13 @@ class Application:
 
     def _redraw(self):
         self._axes_solutions.relim()
-        self._axes_solutions.autoscale_view(True,True,True)
+        self._axes_solutions.autoscale_view(True, True, True)
         self._axes_errors.relim()
-        self._axes_errors.autoscale_view(True,True,True)
+        self._axes_errors.autoscale_view(True, True, True)
 
         if self._recalculate_max_errors:
             self._axes_max_errors.relim()
-            self._axes_max_errors.autoscale_view(True,True,True)
+            self._axes_max_errors.autoscale_view(True, True, True)
             self._recalculate_max_errors = False
         plt.draw()
 
@@ -337,17 +401,12 @@ class Application:
         plt.show()
 
 
-# Initial value problem:
-# y' = f(x, y) = 2x(x^2 + y)
-# y(x0) = y0
-# x is in (x0, X)
-
 def f(x, y):
     return 2 * x * (x ** 2 + y)
 
 
 def solution(x, x0, y0):
-    return (y0 + x0**2 + 1) / math.exp(x0**2) * np.exp(x**2) - x**2 - 1
+    return (y0 + x0 ** 2 + 1) / math.exp(x0 ** 2) * np.exp(x ** 2) - x ** 2 - 1
 
 
 app = Application(f, solution, 0, 0, 10, 20)
