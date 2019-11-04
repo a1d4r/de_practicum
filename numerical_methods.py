@@ -3,23 +3,6 @@ import matplotlib.widgets as mwidgets
 import math
 import numpy as np
 
-# Initial value problem:
-# y' = f(x, y) = 2x(x^2 + y)
-# y(x0) = y0
-# x is in (x0, X)
-#
-# y' = 2x(x^2 + y)
-# y(0) = 0
-# x is in (0, 10)
-#
-# solution: y = (y0 + x0^2 + 1) / e^(x0^2) * e^(x^2) - x^2 - 1
-
-
-# def f(x, y):
-#     return 2 * x * (x**2 + y)
-
-# y_exact = (y0 + x0**2 + 1) / math.exp(x0**2) * np.exp(x**2) - x**2 - 1
-
 
 class NumericalMethods:
     def __init__(self, function, solution, x0, y0, X, N):
@@ -109,12 +92,10 @@ class NumericalMethods:
 
 
 class Application:
-    min_N = 20
-    max_N = 100
     labels = ["Euler's method", "Improved Euler's method", "Runge-Kutta method", "Exact solution"]
     styles = ["Segments", "Segments with dots"]
 
-    def __init__(self, function, solution, x0, y0, X, N):
+    def __init__(self, function, solution, x0, y0, X, N=20, min_N=20, max_N=100):
         # Numerical Methods
         self.function = function
         self.solution = solution
@@ -122,12 +103,16 @@ class Application:
         self.y0 = y0
         self.X = X
         self.N = N
+        self.min_N = min_N
+        self.max_N = max_N
         # for displaying solutions
         self._nm = NumericalMethods(function, solution, x0, y0, X, N)
         # for calculating max errors
         self._nm2 = NumericalMethods(function, solution, x0, y0, X, self.min_N)
         # for recalculating max errors (recalculate only if x0, y0, or X change)
+        self._recalculate_solutions = False
         self._recalculate_max_errors = False
+        # self._nm.print()
         # GUI
         self._figure = plt.figure(figsize=(9, 8), num="Differential Equations: Numerical Methods")
         self.plot_solutions()
@@ -137,6 +122,8 @@ class Application:
         self.draw_text_box_x0()
         self.draw_text_box_y0()
         self.draw_text_box_X()
+        self.draw_text_box_min_N()
+        self.draw_text_box_max_N()
         self.draw_button()
         self.draw_radio_buttons()
 
@@ -186,7 +173,7 @@ class Application:
     def draw_text_box_N(self):
         self._axes_text_box_n = plt.axes([0.8, 0.86, 0.15, 0.04])
         self._text_box_n = mwidgets.TextBox(self._axes_text_box_n, "N:", initial=str(self.N))
-        self._text_box_n.on_submit(self._submit_n)
+        self._text_box_n.on_submit(self._submit_N)
 
     def draw_text_box_x0(self):
         self._axes_text_box_x0 = plt.axes([0.8, 0.80, 0.15, 0.04])
@@ -203,30 +190,52 @@ class Application:
         self._text_box_X = mwidgets.TextBox(self._axes_text_box_X, "X:", initial=str(self.X))
         self._text_box_X.on_submit(self._submit_X)
 
+    def draw_text_box_min_N(self):
+        self._axes_text_box_min_N = plt.axes([0.8, 0.62, 0.15, 0.04])
+        self._text_box_min_N = mwidgets.TextBox(self._axes_text_box_min_N, "min N:", initial=str(self.min_N))
+        self._text_box_min_N.on_submit(self._submit_min_N)
+
+    def draw_text_box_max_N(self):
+        self._axes_text_box_max_N = plt.axes([0.8, 0.56, 0.15, 0.04])
+        self._text_box_max_N = mwidgets.TextBox(self._axes_text_box_max_N, "max N:", initial=str(self.max_N))
+        self._text_box_max_N.on_submit(self._submit_max_N)
+
     def draw_button(self):
-        self._axes_button= plt.axes([0.8, 0.62, 0.15, 0.04])
+        self._axes_button= plt.axes([0.8, 0.50, 0.15, 0.04])
         self._button = mwidgets.Button(self._axes_button, "Update")
         self._button.on_clicked(self._on_press_button)
 
     def draw_radio_buttons(self):
-        self._axes_radio_buttons = plt.axes([0.75, 0.45, 0.22, 0.1])
+        self._axes_radio_buttons = plt.axes([0.75, 0.35, 0.22, 0.1])
         self._axes_radio_buttons.set_title("Line style")
         self._radio_buttons = mwidgets.RadioButtons(self._axes_radio_buttons, self.styles, 1)
         self._radio_buttons.on_clicked(self._on_click_radio_button)
 
-    def _submit_n(self, text):
+    def _submit_N(self, text):
         self.N = int(text)
+        self._recalculate_solutions = True
 
     def _submit_x0(self, text):
         self.x0 = int(text)
+        self._recalculate_solutions = True
         self._recalculate_max_errors = True
 
     def _submit_y0(self, text):
         self.y0 = int(text)
+        self._recalculate_solutions = True
         self._recalculate_max_errors = True
 
     def _submit_X(self, text):
         self.X = int(text)
+        self._recalculate_solutions = True
+        self._recalculate_max_errors = True
+
+    def _submit_min_N(self, text):
+        self.min_N = int(text)
+        self._recalculate_max_errors = True
+
+    def _submit_max_N(self, text):
+        self.max_N = int(text)
         self._recalculate_max_errors = True
 
     def _on_press_button(self, event):
@@ -287,19 +296,17 @@ class Application:
                         self._legend_max_errors.legendHandles[i]._legmarker.set_alpha(0.2)
         self._figure.canvas.draw()
 
-
     def _recalculate(self):
-        self._nm = NumericalMethods(self.function, self.solution, self.x0, self.y0, self.X, self.N)
-        # self._nm.print()
+        if self._recalculate_solutions:
+            self._nm = NumericalMethods(self.function, self.solution, self.x0, self.y0, self.X, self.N)
+            self._solution_euler.set_data(self._nm.x, self._nm.y_euler)
+            self._solution_improved.set_data(self._nm.x, self._nm.y_improved)
+            self._solution_runge_kutta.set_data(self._nm.x, self._nm.y_runge_kutta)
+            self._solution_exact.set_data(self._nm.x, self._nm.y_exact)
 
-        self._solution_euler.set_data(self._nm.x, self._nm.y_euler)
-        self._solution_improved.set_data(self._nm.x, self._nm.y_improved)
-        self._solution_runge_kutta.set_data(self._nm.x, self._nm.y_runge_kutta)
-        self._solution_exact.set_data(self._nm.x, self._nm.y_exact)
-
-        self._errors_euler.set_data(self._nm.x, self._nm.e_euler)
-        self._errors_improved.set_data(self._nm.x, self._nm.e_improved)
-        self._errors_runge_kutta.set_data(self._nm.x, self._nm.e_runge_kutta)
+            self._errors_euler.set_data(self._nm.x, self._nm.e_euler)
+            self._errors_improved.set_data(self._nm.x, self._nm.e_improved)
+            self._errors_runge_kutta.set_data(self._nm.x, self._nm.e_runge_kutta)
 
         if self._recalculate_max_errors:
             self._nm2 = NumericalMethods(self.function, self.solution, self.x0, self.y0, self.X, self.min_N)
@@ -330,21 +337,18 @@ class Application:
         plt.show()
 
 
-def f1(x, y):
-    return x**3 * math.exp(-2 * x) - 2 * y
+# Initial value problem:
+# y' = f(x, y) = 2x(x^2 + y)
+# y(x0) = y0
+# x is in (x0, X)
+
+def f(x, y):
+    return 2 * x * (x ** 2 + y)
 
 
-def solution1(x, x0, y0):
-    return math.exp(-2 * x) / 4 * (x ** 4 + 4)
+def solution(x, x0, y0):
+    return (y0 + x0**2 + 1) / math.exp(x0**2) * np.exp(x**2) - x**2 - 1
 
 
-def f2(x, y):
-    return 2 * x * (x**2 + y)
-
-
-def solution2(x, x0, y0):
-    return (y0 + x0**2 + 1) / math.exp(x0**2) * math.exp(x**2) - x**2 - 1
-
-
-app = Application(f2, solution2, 0, 0, 2, 20)
+app = Application(f, solution, 0, 0, 10, 20)
 app.show()
