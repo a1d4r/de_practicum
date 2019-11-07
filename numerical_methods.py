@@ -1,3 +1,8 @@
+"""
+GUI program implementing different numerical methods for approximating solutions of differential equations.
+Aidar Garikhanov, 06.11.2019
+"""
+
 import matplotlib.pyplot as plt
 import matplotlib.widgets as mwidgets
 import math
@@ -55,10 +60,6 @@ class NumericalMethods:
         self.e_euler = self.y_exact - self.y_euler
         self.e_improved = self.y_exact - self.y_improved
         self.e_runge_kutta = self.y_exact - self.y_runge_kutta
-        # Max error values
-        self.max_e_euler = np.amax(self.e_euler)
-        self.max_e_improved = np.amax(self.e_improved)
-        self.max_e_runge_kutta = np.amax(self.e_runge_kutta)
 
     def calculate_exact_solution(self):
         vfunc = np.vectorize(lambda x: self.s(x, self.x0, self.y0))
@@ -273,6 +274,8 @@ class Application:
         self._axes_radio_buttons = plt.axes([0.75, 0.35, 0.22, 0.1])
         self._axes_radio_buttons.set_title("Line style")
         self._radio_buttons = mwidgets.RadioButtons(self._axes_radio_buttons, self.styles, 1)
+        for circle in self._radio_buttons.circles:
+            circle.width /= 2
         self._radio_buttons.on_clicked(self._on_click_radio_button)
 
     def _submit_N(self, text):
@@ -409,5 +412,5 @@ def solution(x, x0, y0):
     return (y0 + x0 ** 2 + 1) / math.exp(x0 ** 2) * np.exp(x ** 2) - x ** 2 - 1
 
 
-app = Application(f, solution, 0, 0, 10, 20)
+app = Application(f, solution, 0, 0, 2, 20)
 app.show()
